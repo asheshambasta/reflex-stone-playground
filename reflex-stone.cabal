@@ -17,6 +17,7 @@ executable reflex-stone
     , reflex-dom
     , text
     , protolude 
+    , containers
 
   default-extensions:
     DataKinds
