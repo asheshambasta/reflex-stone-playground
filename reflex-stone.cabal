@@ -3,8 +3,8 @@ name:               reflex-stone
 version:            0.1.0.0
 license:            BSD3
 license-file:       LICENSE
-author:             Sridhar Ratnakumar
-maintainer:         srid@srid.ca
+author:             Ashesh Ambasta
+maintainer:         ashesh@asheshambasta.com
 build-type:         Simple
 extra-source-files: README.md
 
@@ -16,13 +16,17 @@ executable reflex-stone
     , reflex
     , reflex-dom
     , text
+    , protolude 
 
   default-extensions:
     DataKinds
     FlexibleContexts
+    NoImplicitPrelude
     LambdaCase
     OverloadedStrings
     ScopedTypeVariables
+    GADTs 
+    TypeFamilies
 
   ghc-options:        -Wall -threaded
 
