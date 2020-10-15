@@ -18,6 +18,16 @@ executable reflex-stone
     , text
     , protolude 
     , containers
+    , lens
+    , witherable
+    
+  other-modules: 
+    Main
+    Exercises.Ex02
+    Exercises.Ex03
+    Exercises.Shared
+    Lib.Reflex.Buttons
+    Lib.Reflex.Clicks 
 
   default-extensions:
     DataKinds
@@ -28,6 +38,8 @@ executable reflex-stone
     ScopedTypeVariables
     GADTs 
     TypeFamilies
+    DerivingVia 
+    RecordWildCards
 
   ghc-options:        -Wall -threaded
 

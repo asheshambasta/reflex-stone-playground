@@ -3,6 +3,7 @@ module Main
   )
 where
 
+import           Control.Lens
 import qualified Data.Map                      as Map
 import           Control.Monad.Fix              ( MonadFix )
 import           Protolude
@@ -44,15 +45,24 @@ buttonTextInput imode = do
       .  elementConfig_initialAttributes
       .~ ("placeholder" =: "Stone!")
       )
-  case undefined of
-    Realtime -> pure dVal
-    -- eEnterPressed: tags the enter keypress event with the current value of the input field.
-    -- send: fires on each keypress of `Enter` in the `input` field.
-    OnKeypressEnter ->
-      let eValAtEnter = tag (RD.current dVal) send
-          send        = keypress Enter input
-      in  RD.holdDyn "" eValAtEnter
 
+  -- Generate an event whenever Enter is pressed, or released.
+  let send = RD.leftmost
+        [Just <$> keypress Enter input, Nothing <$ keyup Enter input]
+
+  -- a dynamic with press/up events from the Enter key.
+  dSend <- RD.holdDyn Nothing send
+
+  -- zip some dynamics: the input mode dynamic, the Enter key dynamic, and the current value in the text input.
+  let dTriple = RD.zipDynWith mkTriple (RD.zipDyn imode dSend) dVal
+
+  fmap (view _3) <$> RD.holdUniqDynBy mustPropagate dTriple
+ where
+  mkTriple (m, e) t = (m, e, t)
+  mustPropagate (mode, enterPressed1, txt1) (_, enterPressed2, txt2) =
+    case mode of
+      Realtime        -> txt1 == txt2 -- fire if text has changed.
+      OnKeypressEnter -> enterPressed1 == enterPressed2 -- fire if the enter key's state was modified.
 
 stoneButton
   :: (MonadHold t m, MonadFix m, DomBuilder t m, PostBuild t m)
@@ -60,11 +70,7 @@ stoneButton
   -> m (Event t ())
 stoneButton dText = do
   let attr = "style" =: "font-size: 200%;"
-  -- dText <- RD.holdDyn "Stone!" eText
   clickEvent $ elAttr' "button" attr (RD.dynText dText)
-
-stone :: DomBuilder t m => m ()
-stone = text "stone"
 
 -- | Get the click event on an element
 --
