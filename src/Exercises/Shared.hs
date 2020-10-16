@@ -2,6 +2,7 @@ module Exercises.Shared
   ( Product(..)
   , Money(..)
   , Stock(..)
+  , ProductStock(..)
   , dispMoney
   , dispProduct
   , showMoney
@@ -18,12 +19,19 @@ import           Protolude               hiding ( Product )
 -- * Types
 
 newtype Stock = Stock Int deriving (Eq, Show, Num, Ord) via Int
+
 newtype Money = Money Int
               deriving (Eq, Show, Num, Ord) via Int
 
 data Product = Product
   { pName :: Text
   , pCost :: Money
+  }
+  deriving (Eq, Show)
+
+data ProductStock = ProductStock
+  { psProduct :: Product
+  , psStock   :: Stock
   }
   deriving (Eq, Show)
 
