@@ -31,9 +31,9 @@ dispInputs :: (RD.DomBuilder t m, RD.MonadHold t m, MonadFix m) => m (Inputs t)
 dispInputs = do
   rec eAddMoney  <- mkButtonConstText mempty "Add money"
       idMoney    <- RD.foldDyn ($) 0 $ RD.mergeWith (.) [eAddMoney $> (+ 1)]
-      idCarrot   <- RD.foldDyn ($) 5 $ reduceWith eCarrot
-      idCucumber <- RD.foldDyn ($) 5 $ reduceWith eCucumber
-      idCelery   <- RD.foldDyn ($) 5 $ reduceWith eCelery
+      idCarrot   <- mkStock 5 eCarrot
+      idCucumber <- mkStock 5 eCucumber
+      idCelery   <- mkStock 5 eCelery
       idSelected <- undefined -- radio
       ieBuy      <- mkButtonConstText mempty "Buy"
 
@@ -48,6 +48,7 @@ dispInputs = do
 
   pure Inputs { .. }
  where
+  mkStock init = RD.foldDyn ($) init . reduceWith
   reduceWith e = RD.mergeWith (.) [e $> flip (-) 1]
   carrotName   = pName carrot
   celeryName   = pName celery
