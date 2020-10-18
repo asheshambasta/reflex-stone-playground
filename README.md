@@ -1,40 +1,10 @@
-# reflex-stone
+# What this is.
 
-Like [Obelisk](https://github.com/obsidiansystems/obelisk), but for static sites.
+This is just a collection of my first random experiments with Reflex. 
 
-**Goal**: be a ready-to-use template repo for writing Reflex apps to be used in statically generated websites (no backend).
+Like many things; the Haskell reflex/ghcjs ecosystem is surprisingly vast and complete; and it can be intimidating for newcomers to start with it.
+I happened to receive help from [@srid](https://github.com/srid) who wrote the wonderful to get started with [Reflex stone](https://github.com/srid/reflex-stone) which helped me get started. 
 
-## Features
+I'd suggest starting out there. 
 
-- Quick-feedback driven development cycle using ghcid and ghc
-- IDE support (Open VSCode and install the suggested extensions)
-
-## Prerequisites
-
-Unless you enjoy compiling for hours at end, you should use the reflex-platform Nix cache by following the [instructions here][cache].
-
-## Development
-
-Running locally using GHC:
-
-```bash
-nix-shell --run 'ghcid -T :main'
-```
-
-Build JS using GHCJS:
-
-```bash
-nix-build site.nix
-open ./result/index.html
-```
-
-## Tracking reflex-platform
-
-We use `niv` to track dependencies including reflex-platform. Note that reflex-platform is pinned to [PR #666] which is the release condidate for the next version.
-
-## Credits
-
-Original inspiration is [this blog post](https://vaibhavsagar.com/blog/2019/10/29/getting-along-with-javascript/).
-
-[cache]: https://github.com/obsidiansystems/obelisk#installing-obelisk
-[PR #666]: https://github.com/reflex-frp/reflex-platform/pull/666
+But please feel free to see my solutions to some exercises here if you wish. I'd be very interested in hearing feedback of what can be improved. 

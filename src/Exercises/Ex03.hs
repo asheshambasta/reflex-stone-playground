@@ -7,7 +7,9 @@ module Exercises.Ex03
   )
 where
 
+import qualified Data.Text                     as T
 import           Data.Default.Class             ( def )
+import qualified Data.Map                      as M
 import           Control.Monad.Fix              ( MonadFix )
 import           Lib.Reflex.Buttons             ( mkButtonConstText )
 import           Protolude               hiding ( Product )
@@ -37,6 +39,7 @@ data Outputs t = Outputs
   , oeError  :: RD.Event t VendingErr
   , odChange :: RD.Dynamic t Money
   , odVend   :: RD.Dynamic t (Maybe Product)
+  , odCart   :: RD.Dynamic t (M.Map Product Int)
   }
 
 data VendingErr = InsufficientFunds Money Money | InsufficientStock
@@ -52,9 +55,9 @@ dispInputs eVend = do
   idCucumber      <- mkStock def eCucumber
   idCelery        <- mkStock def eCelery
 
-  eSelectCarrot   <- dispProductStock carrot idCarrot
-  eSelectCucumber <- dispProductStock cucumber idCucumber
-  eSelectCelery   <- dispProductStock celery idCelery
+  eSelectCarrot   <- dispProductStock carrot True idCarrot
+  eSelectCucumber <- dispProductStock cucumber False idCucumber
+  eSelectCelery   <- dispProductStock celery False idCelery
 
   eAddMoney       <- mkButton "Add money"
 
@@ -65,7 +68,7 @@ dispInputs eVend = do
 
     dispMoney idMoney
 
-    idSelectedProd <- RD.holdDyn preselected eSelect
+    idSelectedProd <- RD.holdDyn def eSelect
 
     let eSelect = RD.leftmost [eSelectCarrot, eSelectCucumber, eSelectCelery]
         idSelected =
@@ -78,12 +81,11 @@ dispInputs eVend = do
  where
   mkStock init = RD.foldDyn ($) init . reduceWith
   reduceWith e = RD.mergeWith (.) [e $> flip (-) 1]
-  preselected = carrot
   -- events indicating the product that was bought.
-  eCarrot     = RD.ffilter (== carrot) eVend
-  eCelery     = RD.ffilter (== celery) eVend
-  eCucumber   = RD.ffilter (== cucumber) eVend
-  mkButton    = RD.elClass "div" "action-button" . mkButtonConstText mempty
+  eCarrot   = RD.ffilter (== carrot) eVend
+  eCelery   = RD.ffilter (== celery) eVend
+  eCucumber = RD.ffilter (== cucumber) eVend
+  mkButton  = RD.elClass "div" "action-button" . mkButtonConstText mempty
   -- this is ugly but will do for now.
   matchProduct idCarrot idCucumber idCelery p
     | p == carrot   = ProductStock p <$> idCarrot
@@ -102,12 +104,24 @@ dispOutputs Outputs {..} = void $ dispChange >> dispVend >> dispError
   dispVend = withinDiv $ do
     RD.el "span" $ RD.text "Last bought: "
     RD.dynText $ maybe "" showProduct <$> odVend
+    withinDiv $ do
+      RD.el "span" $ RD.text "Items:"
+      RD.dynText (dispCart <$> odCart)
+  dispCart = M.foldrWithKey
+    (\prod num msg -> T.unwords [msg, "|", showProduct prod, "x", show num])
+    ""
   dispError = withinDiv $ RD.holdDyn "" eError
   withinDiv = RD.elClass "div" "output"
   eError    = RD.leftmost [oeVend $> "", oeError <&> show @VendingErr @Text]
 
+
 ex03
-  :: (RD.Reflex t, RD.MonadHold t m, RD.PostBuild t m, RD.DomBuilder t m)
+  :: ( RD.Reflex t
+     , MonadFix m
+     , RD.MonadHold t m
+     , RD.PostBuild t m
+     , RD.DomBuilder t m
+     )
   => Inputs t
   -> m (Outputs t)
 ex03 Inputs {..} =
@@ -118,10 +132,12 @@ ex03 Inputs {..} =
   in  do
         odVend   <- RD.holdDyn Nothing (Just <$> oeVend)
         odChange <- RD.holdDyn 0 oeChange
+        odCart   <- RD.foldDyn updateCount mempty oeVend
         dispError
         pure Outputs { .. }
 
  where
+  updateCount     = M.alter $ Just . maybe 1 (+ 1)
   eBuyAttempt     = RD.tag ibSelectedMoney ieBuy <&> checkAttempt
   ibSelectedMoney = (,) <$> bMoney <*> bSelected
   dispError =
@@ -135,3 +151,4 @@ ex03 Inputs {..} =
     | money < cost = Left $ InsufficientFunds money cost
     | otherwise    = Right ps
     where cost = pCost psProduct
+

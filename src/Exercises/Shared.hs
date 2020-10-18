@@ -18,7 +18,6 @@ where
 import           Data.Default.Class             ( Default(..) )
 import           Control.Monad.Fix              ( MonadFix )
 import           Lib.Reflex.Clicks              ( clickEvent' )
-import qualified Data.Map                      as M
 import           Lib.Reflex.Buttons             ( mkButtonConstText )
 import           Reflex.Dom
 import           Protolude               hiding ( Product )
@@ -37,7 +36,13 @@ data Product = Product
   { pName :: Text
   , pCost :: Money
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
+
+instance Default Product where
+  def = carrot
+
+instance Default ProductStock where
+  def = ProductStock def def
 
 data ProductStock = ProductStock
   { psProduct :: Product
@@ -82,9 +87,10 @@ If we were to report the stock value; this value would be the stock value at the
 dispProductStock
   :: (DomBuilder t m, PostBuild t m, MonadFix m)
   => Product
+  -> Bool
   -> Dynamic t Stock
   -> m (Event t Product)
-dispProductStock prod@Product {..} dStock =
+dispProductStock prod@Product {..} preSel dStock =
   elAttr "div" attrs $ dispProduct prod >> dispStock >> dispSelectRadio
  where
   attrs =
@@ -100,6 +106,9 @@ dispProductStock prod@Product {..} dStock =
    where
     labelAttrs = "for" =: id
     inputAttrs =
-      M.fromList [("type", "radio"), ("id", id), ("name", "prodSelect")]
+      ("type" =: "radio")
+        <> ("id" =: id)
+        <> ("name" =: "prodSelect")
+        <> if preSel then "checked" =: "" else mempty
     id = pName
 
