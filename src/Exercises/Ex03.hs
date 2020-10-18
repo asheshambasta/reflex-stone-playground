@@ -64,7 +64,7 @@ dispInputs eVend = do
   rec
     idMoney <- RD.foldDyn ($) 0 $ RD.mergeWith
       (.)
-      [eAddMoney $> (+ 1), ieRefund $> const 0, eVend <&> flip (-) . pCost]
+      [eAddMoney $> (+ 1), ieRefund $> const 0, eVend <&> subtract . pCost]
 
     dispMoney idMoney
 
@@ -80,7 +80,7 @@ dispInputs eVend = do
   pure Inputs { .. }
  where
   mkStock init = RD.foldDyn ($) init . reduceWith
-  reduceWith e = RD.mergeWith (.) [e $> flip (-) 1]
+  reduceWith e = e $> subtract 1
   -- events indicating the product that was bought.
   eCarrot   = RD.ffilter (== carrot) eVend
   eCelery   = RD.ffilter (== celery) eVend
@@ -108,7 +108,7 @@ dispOutputs Outputs {..} = void $ dispChange >> dispVend >> dispError
       RD.el "span" $ RD.text "Items:"
       RD.dynText (dispCart <$> odCart)
   dispCart = M.foldrWithKey
-    (\prod num msg -> T.unwords [msg, "|", showProduct prod, "x", show num])
+    (\prod num msg -> T.unwords [msg, "\n", showProduct prod, "x", show num])
     ""
   dispError = withinDiv $ RD.holdDyn "" eError
   withinDiv = RD.elClass "div" "output"
