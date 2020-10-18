@@ -1,5 +1,6 @@
 module Lib.Reflex.Buttons
   ( mkButton
+  , mkButtonConstTextClass
   , mkButtonConstText
   )
 where
@@ -15,3 +16,7 @@ mkButtonConstText
   :: RD.DomBuilder t m => Map Text Text -> Text -> m (RD.Event t ())
 mkButtonConstText attrs = mkButton attrs . RD.text
 
+mkButtonConstTextClass
+  :: RD.DomBuilder t m => Text -> Map Text Text -> Text -> m (RD.Event t ())
+mkButtonConstTextClass class' attrs =
+  mkButtonConstText (attrs <> ("class" RD.=: class'))

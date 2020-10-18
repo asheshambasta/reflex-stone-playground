@@ -11,14 +11,16 @@ import qualified Data.Text                     as T
 import           Data.Default.Class             ( def )
 import qualified Data.Map                      as M
 import           Control.Monad.Fix              ( MonadFix )
-import           Lib.Reflex.Buttons             ( mkButtonConstText )
+import           Lib.Reflex.Buttons             ( mkButtonConstText
+                                                , mkButtonConstTextClass
+                                                )
 import           Protolude               hiding ( Product )
 import qualified Reflex.Dom                    as RD
 import           Reflex.Dom                     ( (=:) )
 import           Exercises.Shared
 
 runEx03 :: IO ()
-runEx03 = RD.mainWidget $ do
+runEx03 = mainWidgetWithBootstrap $ do
   rec inputs                  <- dispInputs oeVend
       outs@Outputs { oeVend } <- ex03 inputs
   dispOutputs outs
@@ -59,7 +61,7 @@ dispInputs eVend = do
   eSelectCucumber <- dispProductStock cucumber False idCucumber
   eSelectCelery   <- dispProductStock celery False idCelery
 
-  eAddMoney       <- mkButton "Add money"
+  eAddMoney       <- mkButtonConstTextClass "btn-success" mempty "Add money"
 
   rec
     idMoney <- RD.foldDyn ($) 0 $ RD.mergeWith

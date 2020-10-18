@@ -1,4 +1,4 @@
-{-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE RecursiveDo, RankNTypes #-}
 module Exercises.Shared
   ( Product(..)
   , Money(..)
@@ -12,6 +12,8 @@ module Exercises.Shared
   , carrot
   , celery
   , cucumber
+  -- * Widget
+  , mainWidgetWithBootstrap
   )
 where
 
@@ -21,6 +23,40 @@ import           Lib.Reflex.Clicks              ( clickEvent' )
 import           Lib.Reflex.Buttons             ( mkButtonConstText )
 import           Reflex.Dom
 import           Protolude               hiding ( Product )
+
+-- * Bootstrap
+
+-- | Create a widget with all the bootstrap stuff. 
+mainWidgetWithBootstrap :: (forall x . Widget x ()) -> IO ()
+mainWidgetWithBootstrap = mainWidgetWithHead $ do
+  elAttr "link" cssAttrs $ text ""
+  elAttr "script" jqueryAttrs $ text ""
+  elAttr "script" bootstrapJsAttrs $ text ""
+ where
+  cssAttrs =
+    ("rel" =: "stylesheet")
+      <> ("href"
+         =: "https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+         )
+      <> ("integrity"
+         =: "sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
+         )
+      <> ("crossorigin" =: "anonymous")
+  jqueryAttrs =
+    ("src" =: "https://code.jquery.com/jquery-3.5.1.slim.min.js")
+      <> ("integrity"
+         =: "sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+         )
+      <> ("crossorigin" =: "anonymous")
+  bootstrapJsAttrs =
+    ("src"
+      =: "https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+      )
+      <> ("integrity"
+         =: "sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+         )
+      <> ("crossorigin" =: "anonymous")
+
 
 -- * Types
 
