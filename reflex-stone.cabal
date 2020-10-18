@@ -19,6 +19,7 @@ executable reflex-stone
     , protolude 
     , containers
     , lens
+    , data-default-class
     , witherable
     
   other-modules: 
@@ -41,7 +42,7 @@ executable reflex-stone
     DerivingVia 
     RecordWildCards
 
-  ghc-options:        -Wall -threaded
+  ghc-options:        -Wall -threaded -Wno-unused-do-bind
 
   if impl(ghcjs -any)
     ghc-options: -dedupe
