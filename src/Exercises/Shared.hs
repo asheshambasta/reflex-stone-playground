@@ -55,14 +55,16 @@ cucumber :: Product
 cucumber = Product "Cucumber" 3
 
 dispMoney :: (PostBuild t m, DomBuilder t m) => Dynamic t Money -> m ()
-dispMoney dMoney = elAttr "span" mempty $ dynText (showMoney <$> dMoney)
+dispMoney dMoney = elClass "span" "money" $ dynText (showMoney <$> dMoney)
 
 dispProduct :: DomBuilder t m => Product -> m (Event t ())
-dispProduct Product {..} = elClass "div" "product-data" $ do
+dispProduct Product {..} = elAttr "div" ("style" =: prodStyle) $ do
   text pName
   text " "
   mkButtonConstText attrs $ "Buy: " <> showMoney pCost
-  where attrs = "style" =: "color: blue;"
+ where
+  attrs     = "style" =: "color: blue;"
+  prodStyle = "border: solid; border-color: red #32a1ce;"
 
 showMoney :: Money -> Text
 showMoney (Money m) = "$" <> show m
@@ -70,22 +72,31 @@ showMoney (Money m) = "$" <> show m
 showProduct :: Product -> Text
 showProduct Product {..} = pName <> " @ " <> showMoney pCost
 
+{- |
+Displays a product along with its stock. The click event
+indicates the user clicking on the radio button to select the given product.
+
+This click event currently only reports the product being selected; and not the current stock value.
+If we were to report the stock value; this value would be the stock value at the time of click. This can be misused.
+-}
 dispProductStock
   :: (DomBuilder t m, PostBuild t m, MonadFix m)
   => Product
   -> Dynamic t Stock
-  -> m (Event t ProductStock)
+  -> m (Event t Product)
 dispProductStock prod@Product {..} dStock =
-  elClass "div" "product" $ dispProduct prod >> dispStock >> dispSelectRadio
+  elAttr "div" attrs $ dispProduct prod >> dispStock >> dispSelectRadio
  where
+  attrs =
+    "style"
+      =: "background-color: rgba(255, 255, 128, .5); border: solid; border-color: blue; border-spacing: 5px 1rem;"
   dispStock       = dynText $ mappend "Stock: " . show <$> dStock
   dispSelectRadio = do
     rec
       el "div" $ pure radio
       (radio, _) <-
         elAttr' "input" inputAttrs . elAttr "label" labelAttrs $ text ""
-    let bProdStock = ProductStock prod <$> current dStock
-    pure $ tag bProdStock (clickEvent' radio)
+    pure $ clickEvent' radio $> prod
    where
     labelAttrs = "for" =: id
     inputAttrs =
