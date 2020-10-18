@@ -17,10 +17,11 @@ module Exercises.Shared
   )
 where
 
+import qualified Data.Map                      as M
 import           Data.Default.Class             ( Default(..) )
 import           Control.Monad.Fix              ( MonadFix )
 import           Lib.Reflex.Clicks              ( clickEvent' )
-import           Lib.Reflex.Buttons             ( mkButtonConstText )
+import           Lib.Reflex.Buttons             ( mkButtonConstTextClass )
 import           Reflex.Dom
 import           Protolude               hiding ( Product )
 
@@ -71,6 +72,7 @@ newtype Money = Money Int
 data Product = Product
   { pName :: Text
   , pCost :: Money
+  , pImg  :: Text
   }
   deriving (Eq, Show, Ord)
 
@@ -87,25 +89,32 @@ data ProductStock = ProductStock
   deriving (Eq, Show)
 
 carrot :: Product
-carrot = Product "Carrot" 1
+carrot = Product
+  "Carrot"
+  1
+  "https://i5.walmartimages.ca/images/Enlarge/686/686/6000198686686.jpg"
 
 celery :: Product
-celery = Product "Celery" 2
+celery = Product
+  "Celery"
+  2
+  "https://i5.walmartimages.ca/images/Enlarge/094/529/6000200094529.jpg"
 
 cucumber :: Product
-cucumber = Product "Cucumber" 3
+cucumber = Product
+  "Cucumber"
+  3
+  "https://cdn.mos.cms.futurecdn.net/EBEXFvqez44hySrWqNs3CZ.jpg"
 
 dispMoney :: (PostBuild t m, DomBuilder t m) => Dynamic t Money -> m ()
 dispMoney dMoney = elClass "span" "money" $ dynText (showMoney <$> dMoney)
 
 dispProduct :: DomBuilder t m => Product -> m (Event t ())
-dispProduct Product {..} = elAttr "div" ("style" =: prodStyle) $ do
-  text pName
-  text " "
-  mkButtonConstText attrs $ "Buy: " <> showMoney pCost
- where
-  attrs     = "style" =: "color: blue;"
-  prodStyle = "border: solid; border-color: red #32a1ce;"
+dispProduct Product {..} = elAttr "div" cardAttrs $ do
+  elAttr "img" imgAttrs $ text ""
+  elClass "div" "card-body" . elClass "h5" "card-title" $ text pName
+  mkButtonConstTextClass "btn btn-primary" mempty $ "Buy: " <> showMoney pCost
+  where imgAttrs = ("class" =: "card-img-top") <> ("src" =: pImg)
 
 showMoney :: Money -> Text
 showMoney (Money m) = "$" <> show m
@@ -127,12 +136,14 @@ dispProductStock
   -> Dynamic t Stock
   -> m (Event t Product)
 dispProductStock prod@Product {..} preSel dStock =
-  elAttr "div" attrs $ dispProduct prod >> dispStock >> dispSelectRadio
+  elAttr "div" cardAttrs $ dispProduct prod >> dispStock >> dispSelectRadio
  where
-  attrs =
-    "style"
-      =: "background-color: rgba(255, 255, 128, .5); border: solid; border-color: blue; border-spacing: 5px 1rem;"
-  dispStock       = dynText $ mappend "Stock: " . show <$> dStock
+  dispStock =
+    elClass "h6" "card-subtitle mb-2 text-muted"
+      .   dynText
+      $   mappend "Stock: "
+      .   show
+      <$> dStock
   dispSelectRadio = do
     rec
       el "div" $ pure radio
@@ -148,3 +159,5 @@ dispProductStock prod@Product {..} preSel dStock =
         <> if preSel then "checked" =: "" else mempty
     id = pName
 
+cardAttrs :: M.Map Text Text
+cardAttrs = ("class" =: "card") <> ("style" =: "width: 18rem;")
