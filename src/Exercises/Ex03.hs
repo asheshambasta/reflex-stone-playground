@@ -18,12 +18,14 @@ import           Protolude               hiding ( Product )
 import qualified Reflex.Dom                    as RD
 import           Reflex.Dom                     ( (=:) )
 import           Exercises.Shared
+import           Exercises.Shared.Widgets       ( mainWidgetWithBulma )
+import           Exercises.Shared.Widgets.Bulma ( sectionContainer )
 
 runEx03 :: IO ()
-runEx03 = mainWidgetWithBootstrap $ do
-  rec inputs                  <- dispInputs oeVend
+runEx03 = mainWidgetWithBulma $ do
+  rec inputs                  <- sectionContainer . dispInputs $ oeVend
       outs@Outputs { oeVend } <- ex03 inputs
-  dispOutputs outs
+  sectionContainer . dispOutputs $ outs
 
 data Inputs t = Inputs
   { idMoney    :: RD.Dynamic t Money
@@ -52,6 +54,8 @@ dispInputs
   => RD.Event t Product
   -> m (Inputs t)
 dispInputs eVend = do
+
+  RD.elClass "h3" "title" $ RD.text "Choose an item."
 
   idCarrot        <- mkStock def eCarrot
   idCucumber      <- mkStock def eCucumber
@@ -98,24 +102,26 @@ dispOutputs
   :: (RD.DomBuilder t m, RD.MonadHold t m, RD.PostBuild t m, MonadFix m)
   => Outputs t
   -> m ()
-dispOutputs Outputs {..} = void $ dispChange >> dispVend >> dispError
+dispOutputs Outputs {..} =
+  void . RD.elClass "nav" "level" $ dispChange >> dispVend >> dispError
  where
-  dispChange = withinDiv $ do
-    RD.el "span" $ RD.text "Change: "
-    RD.dynText $ showMoney <$> odChange
-  dispVend = withinDiv $ do
-    RD.el "span" $ RD.text "Last bought: "
-    RD.dynText $ maybe "" showProduct <$> odVend
-    withinDiv $ do
-      RD.el "span" $ RD.text "Items:"
-      RD.dynText (dispCart <$> odCart)
-  dispCart = M.foldrWithKey
-    (\prod num msg -> T.unwords [msg, "\n", showProduct prod, "x", show num])
-    ""
-  dispError = withinDiv $ RD.holdDyn "" eError
-  withinDiv = RD.elClass "div" "output"
-  eError    = RD.leftmost [oeVend $> "", oeError <&> show @VendingErr @Text]
-
+  dispChange = withinDiv $ withinPs "Change" (showMoney <$> odChange)
+  dispVend =
+    withinDiv $ withinPs "Last bought" (maybe "--" showProduct <$> odVend)
+    -- withinDiv $ do
+    --   RD.el "span" $ RD.text "Items:"
+    --   RD.dynText (dispCart <$> odCart)
+  -- dispCart = M.foldrWithKey
+  --   (\prod num msg -> T.unwords [msg, "\n", showProduct prod, "x", show num])
+  --   ""
+  dispError = do
+    dError <- RD.holdDyn "" eError
+    withinDiv $ withinPs "" dError
+  withinDiv = RD.elClass "div" "level-item has-text-centered" . RD.el "div"
+  withinPs heading title =
+    RD.elClass "p" "heading" (RD.text heading)
+      >> RD.elClass "p" "title" (RD.dynText title)
+  eError = RD.leftmost [oeVend $> "", oeError <&> show @VendingErr @Text]
 
 ex03
   :: ( RD.Reflex t

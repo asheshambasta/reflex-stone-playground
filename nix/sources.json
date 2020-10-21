@@ -1,4 +1,16 @@
 {
+    "bulmex": {
+        "branch": "master",
+        "description": "reflex infused with bulma",
+        "homepage": null,
+        "owner": "jappeace",
+        "repo": "bulmex",
+        "rev": "cd4571e918a4ff70568da075b79edb60d265d330",
+        "sha256": "02d0an5kgxs9mb124rdaz72gdyzbni72aspwaadsplx7yvz73hwq",
+        "type": "tarball",
+        "url": "https://github.com/jappeace/bulmex/archive/cd4571e918a4ff70568da075b79edb60d265d330.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",

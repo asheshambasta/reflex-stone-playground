@@ -15,6 +15,8 @@ executable reflex-stone
       base
     , reflex
     , reflex-dom
+    -- , reflex-dom-helpers
+    -- , bulmex
     , text
     , protolude 
     , containers
@@ -27,7 +29,9 @@ executable reflex-stone
     Exercises.Ex02
     Exercises.Ex03
     Exercises.Shared
+    Exercises.Shared.Widgets
     Lib.Reflex.Buttons
+    Lib.Reflex.Elements
     Lib.Reflex.Clicks 
 
   default-extensions:
