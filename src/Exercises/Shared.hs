@@ -1,4 +1,4 @@
-{-# LANGUAGE RecursiveDo, RankNTypes #-}
+{-# LANGUAGE RankNTypes #-}
 module Exercises.Shared
   ( Product(..)
   , Money(..)
@@ -15,11 +15,10 @@ module Exercises.Shared
   )
 where
 
-import qualified Data.Map                      as M
+import           Lib.Reflex.Elements            ( emptyEl )
 import           Data.Default.Class             ( Default(..) )
 import           Control.Monad.Fix              ( MonadFix )
-import           Lib.Reflex.Clicks              ( clickEvent' )
-import           Lib.Reflex.Buttons             ( mkButtonConstTextClass )
+import           Lib.Reflex.Clicks              ( clickEvent )
 import           Reflex.Dom
 import           Protolude               hiding ( Product )
 
@@ -75,14 +74,42 @@ dispMoney dMoney = elDynClass "span" dBadgeClass
   $ dynText (showMoney <$> dMoney)
  where
   dBadgeClass = dMoney
-    <&> \m -> if m > 0 then "badge badge-success" else "badge badge-warning"
+    <&> \m -> "tag is-large " <> if m > 0 then "is-success" else "is-warning"
 
-dispProduct :: DomBuilder t m => Product -> m (Event t ())
-dispProduct Product {..} = elAttr "div" cardAttrs $ do
-  elAttr "img" imgAttrs $ text ""
-  elClass "div" "card-body" . elClass "h5" "card-title" $ text pName
-  mkButtonConstTextClass "btn btn-primary" mempty $ "Buy: " <> showMoney pCost
-  where imgAttrs = ("class" =: "card-img-top") <> ("src" =: pImg)
+dispProduct
+  :: (DomBuilder t m, PostBuild t m)
+  => Dynamic t Product
+  -> Product
+  -> m (Event t ())
+dispProduct = dispProduct' Nothing
+
+dispProduct'
+  :: (DomBuilder t m, PostBuild t m)
+  => Maybe (Dynamic t Stock)
+  -> Dynamic t Product -- ^ A dynamic indicating the selected product.
+  -> Product
+  -> m (Event t ())
+dispProduct' mStock dSelected prod@Product {..} = clickEvent $ fst <$> prodTile
+ where
+  prodTile =
+    elClass' "div" "tile is-parent"
+      . elDynAttr "article" prodAttrs -- "tile is-child notification is-info"
+      $ do
+          elClass "p" "title" $ text pName
+          subtitle $ text (showMoney pCost)
+          when (isJust mStock) stock'
+          elClass "figure" "image is-4by3" $ emptyEl "img" imgAttrs
+  imgAttrs  = "src" =: pImg
+  stock'    = subtitle $ maybe (text "") (dynText . fmap showStock) mStock
+  subtitle  = elClass "p" "subtitle"
+  prodAttrs = dSelected <&> \p -> if p == prod
+    then prodClass <> ("style" =: "background-color: cadetblue;")
+    else prodClass
+  prodClass = "class" =: "tile is-child notification is-info"
+
+showStock :: Stock -> Text
+showStock s | s > 0     = show s <> " in stock"
+            | otherwise = "Sold out"
 
 showMoney :: Money -> Text
 showMoney (Money m) = "$" <> show m
@@ -91,41 +118,14 @@ showProduct :: Product -> Text
 showProduct Product {..} = pName <> " @ " <> showMoney pCost
 
 {- |
-Displays a product along with its stock. The click event
-indicates the user clicking on the radio button to select the given product.
-
-This click event currently only reports the product being selected; and not the current stock value.
-If we were to report the stock value; this value would be the stock value at the time of click. This can be misused.
+Display a product and its stock.
 -}
 dispProductStock
   :: (DomBuilder t m, PostBuild t m, MonadFix m)
   => Product
-  -> Bool
+  -> Dynamic t Product
   -> Dynamic t Stock
   -> m (Event t Product)
-dispProductStock prod@Product {..} preSel dStock =
-  elAttr "div" cardAttrs $ dispProduct prod >> dispStock >> dispSelectRadio
- where
-  dispStock =
-    elClass "h6" "card-subtitle mb-2 text-muted"
-      .   dynText
-      $   mappend "Stock: "
-      .   show
-      <$> dStock
-  dispSelectRadio = do
-    rec
-      el "div" $ pure radio
-      (radio, _) <-
-        elAttr' "input" inputAttrs . elAttr "label" labelAttrs $ text ""
-    pure $ clickEvent' radio $> prod
-   where
-    labelAttrs = "for" =: id
-    inputAttrs =
-      ("type" =: "radio")
-        <> ("id" =: id)
-        <> ("name" =: "prodSelect")
-        <> if preSel then "checked" =: "" else mempty
-    id = pName
+dispProductStock prod dSelected dStock =
+  dispProduct' (Just dStock) dSelected prod <&> ($> prod)
 
-cardAttrs :: M.Map Text Text
-cardAttrs = ("class" =: "card") <> ("style" =: "width: 18rem;")

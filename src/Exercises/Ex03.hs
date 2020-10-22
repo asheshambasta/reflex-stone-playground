@@ -7,13 +7,10 @@ module Exercises.Ex03
   )
 where
 
-import qualified Data.Text                     as T
 import           Data.Default.Class             ( def )
 import qualified Data.Map                      as M
 import           Control.Monad.Fix              ( MonadFix )
-import           Lib.Reflex.Buttons             ( mkButtonConstText
-                                                , mkButtonConstTextClass
-                                                )
+import           Lib.Reflex.Buttons             ( mkButtonConstTextClass )
 import           Protolude               hiding ( Product )
 import qualified Reflex.Dom                    as RD
 import           Reflex.Dom                     ( (=:) )
@@ -54,34 +51,33 @@ dispInputs
   => RD.Event t Product
   -> m (Inputs t)
 dispInputs eVend = do
-
   RD.elClass "h3" "title" $ RD.text "Choose an item."
 
-  idCarrot        <- mkStock def eCarrot
-  idCucumber      <- mkStock def eCucumber
-  idCelery        <- mkStock def eCelery
-
-  eSelectCarrot   <- dispProductStock carrot True idCarrot
-  eSelectCucumber <- dispProductStock cucumber False idCucumber
-  eSelectCelery   <- dispProductStock celery False idCelery
-
-  eAddMoney       <- mkButtonConstTextClass "btn-success" mempty "Add money"
+  idCarrot   <- mkStock def eCarrot
+  idCucumber <- mkStock def eCucumber
+  idCelery   <- mkStock def eCelery
 
   rec
-    idMoney <- RD.foldDyn ($) 0 $ RD.mergeWith
+
+    dispMoney' idMoney
+
+    (eSelectCarrot, eSelectCucumber, eSelectCelery) <- productTiles
+      idSelectedProd
+      idCarrot
+      idCucumber
+      idCelery
+
+    (eAddMoney, ieRefund, ieBuy) <- controlButtons
+
+    idMoney                      <- RD.foldDyn ($) 0 $ RD.mergeWith
       (.)
       [eAddMoney $> (+ 1), ieRefund $> const 0, eVend <&> subtract . pCost]
-
-    dispMoney idMoney
 
     idSelectedProd <- RD.holdDyn def eSelect
 
     let eSelect = RD.leftmost [eSelectCarrot, eSelectCucumber, eSelectCelery]
         idSelected =
           idSelectedProd >>= matchProduct idCarrot idCucumber idCelery
-
-    ieRefund <- mkButton "Refund"
-    ieBuy    <- mkButton "Buy"
 
   pure Inputs { .. }
  where
@@ -91,37 +87,70 @@ dispInputs eVend = do
   eCarrot   = RD.ffilter (== carrot) eVend
   eCelery   = RD.ffilter (== celery) eVend
   eCucumber = RD.ffilter (== cucumber) eVend
-  mkButton  = RD.elClass "div" "action-button" . mkButtonConstText mempty
   -- this is ugly but will do for now.
   matchProduct idCarrot idCucumber idCelery p
     | p == carrot   = ProductStock p <$> idCarrot
     | p == cucumber = ProductStock p <$> idCucumber
     | otherwise     = ProductStock p <$> idCelery
+  dispMoney' =
+    withinNav . withinNavDiv . withinNavPs "Money inserted" . dispMoney
+
+productTiles
+  :: (RD.DomBuilder t m, RD.PostBuild t m, MonadFix m)
+  => RD.Dynamic t Product
+  -> RD.Dynamic t Stock
+  -> RD.Dynamic t Stock
+  -> RD.Dynamic t Stock
+  -> m
+       ( RD.Event t Product
+       , RD.Event t Product
+       , RD.Event t Product
+       )
+productTiles dSelected idCarrot idCucumber idCelery =
+  RD.elClass "div" "tile is-ancestor"
+    . RD.elClass "div" "tile is-vertical is-8"
+    . RD.elClass "div" "tile"
+    $ do
+        eSelectCarrot   <- dispProductStock carrot dSelected idCarrot
+        eSelectCucumber <- dispProductStock cucumber dSelected idCucumber
+        eSelectCelery   <- dispProductStock celery dSelected idCelery
+        pure (eSelectCarrot, eSelectCucumber, eSelectCelery)
+
+controlButtons
+  :: (RD.DomBuilder t m, RD.MonadHold t m, RD.PostBuild t m, MonadFix m)
+  => m (RD.Event t (), RD.Event t (), RD.Event t ())
+controlButtons = RD.elClass "div" "buttons" $ do
+  eAddMoney' <- mkButtonConstTextClass "button is-info" mempty "Add money"
+  ieBuy'     <- mkButtonConstTextClass "button is-success" mempty "Buy"
+  ieRefund'  <- mkButtonConstTextClass "button is-danger" mempty "Refund"
+  pure (eAddMoney', ieRefund', ieBuy')
 
 dispOutputs
   :: (RD.DomBuilder t m, RD.MonadHold t m, RD.PostBuild t m, MonadFix m)
   => Outputs t
   -> m ()
 dispOutputs Outputs {..} =
-  void . RD.elClass "nav" "level" $ dispChange >> dispVend >> dispError
+  void . withinNav $ dispChange >> dispVend >> dispError
  where
-  dispChange = withinDiv $ withinPs "Change" (showMoney <$> odChange)
-  dispVend =
-    withinDiv $ withinPs "Last bought" (maybe "--" showProduct <$> odVend)
-    -- withinDiv $ do
-    --   RD.el "span" $ RD.text "Items:"
-    --   RD.dynText (dispCart <$> odCart)
-  -- dispCart = M.foldrWithKey
-  --   (\prod num msg -> T.unwords [msg, "\n", showProduct prod, "x", show num])
-  --   ""
+  dispChange =
+    withinNavDiv $ withinNavPs "Change" (RD.dynText $ showMoney <$> odChange)
+  dispVend = withinNavDiv $ withinNavPs
+    "Last bought"
+    (RD.dynText $ maybe "--" showProduct <$> odVend)
   dispError = do
     dError <- RD.holdDyn "" eError
-    withinDiv $ withinPs "" dError
-  withinDiv = RD.elClass "div" "level-item has-text-centered" . RD.el "div"
-  withinPs heading title =
-    RD.elClass "p" "heading" (RD.text heading)
-      >> RD.elClass "p" "title" (RD.dynText title)
+    withinNavDiv $ withinNavPs "" (RD.dynText dError)
   eError = RD.leftmost [oeVend $> "", oeError <&> show @VendingErr @Text]
+
+withinNav :: RD.DomBuilder t m => m a -> m a
+withinNav = RD.elClass "nav" "level"
+
+withinNavDiv :: RD.DomBuilder t m => m a -> m a
+withinNavDiv = RD.elClass "div" "level-item has-text-centered" . RD.el "div"
+
+withinNavPs :: RD.DomBuilder t m => Text -> m b -> m b
+withinNavPs heading title =
+  RD.elClass "p" "heading" (RD.text heading) >> RD.elClass "p" "title" title
 
 ex03
   :: ( RD.Reflex t

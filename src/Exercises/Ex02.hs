@@ -23,9 +23,9 @@ dispInputs
   -> m (Inputs t)
 dispInputs eSpend = el "div" $ do
 
-  ieCarrot   <- dispProduct carrot
-  ieCelery   <- dispProduct celery
-  ieCucumber <- dispProduct cucumber
+  ieCarrot   <- dispProduct (pure def) carrot
+  ieCelery   <- dispProduct (pure def) celery
+  ieCucumber <- dispProduct (pure def) cucumber
   ieRefund   <- mkButtonConstText mempty "Refund"
 
   eAddMoney  <- addMoneyButton
