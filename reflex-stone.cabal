@@ -16,7 +16,7 @@ executable reflex-stone
     , reflex
     , reflex-dom
     -- , reflex-dom-helpers
-    -- , bulmex
+    , bulmex
     , text
     , protolude 
     , containers

@@ -14,10 +14,10 @@ in rp.project ({ pkgs, ... }: {
     ghc = [ "reflex-stone" ];
     ghcjs = [ "reflex-stone" ];
   };
-  # overrides = self: super: {
-  #   # bulmex = self.callHackage "bulmex" "4.0.0" {};
-  #   bulmex = self.callCabal2nix "bulmex" ../bulmex/bulmex { };
-  #   reflex-dom-helpers =
-  #   self.callPackage ../bulmex/packages/reflex-dom-helpers.nix { };
-  # };
+
+  overrides = self: super: { 
+    bulmex = self.callCabal2nix "bulmex" ../bulmex/bulmex {};
+    reflex-dom-helpers = self.callCabal2nix "reflex-dom-helpers" ../reflex-dom-helpers {};
+  };
+
 })
