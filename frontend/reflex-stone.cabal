@@ -33,6 +33,7 @@ executable reflex-stone
     Lib.Reflex.Buttons
     Lib.Reflex.Elements
     Lib.Reflex.Clicks 
+    Exercises.Shared.Widgets.Bulma
 
   default-extensions:
     DataKinds

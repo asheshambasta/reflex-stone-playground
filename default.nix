@@ -9,7 +9,7 @@ let
 in rp.project ({ pkgs, ... }: {
   useWarp = true;
   withHoogle = false;
-  packages = { reflex-stone = ./.; };
+  packages = { reflex-stone = ./frontend; };
   shells = {
     ghc = [ "reflex-stone" ];
     ghcjs = [ "reflex-stone" ];
