@@ -9,10 +9,10 @@ let
 in rp.project ({ pkgs, ... }: {
   useWarp = true;
   withHoogle = false;
-  packages = { reflex-stone = ./frontend; };
+  packages = { frontend = ./frontend; };
   shells = {
-    ghc = [ "reflex-stone" ];
-    ghcjs = [ "reflex-stone" ];
+    ghc = [ "frontend" ];
+    ghcjs = [ "frontend" ];
   };
 
   overrides = self: super: { 
